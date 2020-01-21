@@ -20,7 +20,7 @@ public class Mexico {
     final int maxRolls = 3;      // No player may exceed this
     final int startAmount = 3;   // Money for a player. Select any
     final int mexico = 1000;     // A value greater than any other
-
+    int leaderRolls = 4;
     void program() {
         //test();            // <----------------- UNCOMMENT to test
 
@@ -41,37 +41,49 @@ public class Mexico {
             // ----- In ----------
             String cmd = getPlayerChoice(current);
             if ("r".equals(cmd)) {
-
-                    // --- Process ------
-
-
+                if (current.nRolls < maxRolls && current.nRolls <= leaderRolls) {
+                    roll(current);
+                    if(leader == current){
+                        leaderRolls = leaderRolls - 1;
+                    }
                     // ---- Out --------
                     roundMsg(current);
-
-            } else if ("n".equals(cmd)) {
+                }
+                else{
+                    current = next(players,current);
+                }
+            }
+            else if ("n".equals(cmd)) {
                  // Process
             } else {
                 out.println("?");
             }
-
             //if ( round finished) {
                 // --- Process -----
 
                 // ----- Out --------------------
-                out.println("Round done ... lost!");
-                out.println("Next to roll is " + current.name);
+                //out.println("Round done ... lost!");
+                //out.println("Next to roll is " + current.name);
 
-                statusMsg(players);
+                //statusMsg(players);
             //}
         }
-        out.println("Game Over, winner is " + players[0].name + ". Will get " + pot + " from pot");
+        //out.println("Game Over, winner is " + players[indexOf(players,current)].name + ". Will get " + pot + " from pot");
     }
 
 
     // ---- Game logic methods --------------
 
-    // TODO
+    void roll(Player current) {
+        current.fstDice = 1 + rand.nextInt(6);
+        current.secDice = 1 + rand.nextInt(6);
+        current.nRolls = current.nRolls + 1;
+        current.rollValue = current.rollValue + current.fstDice + current.secDice;
+    }
 
+    Player next(Player[] players, Player current) {
+        return players[indexOf(players,current)];
+    }
 
     int indexOf(Player[] players, Player player) {
         for (int i = 0; i < players.length; i++) {
@@ -96,12 +108,15 @@ public class Mexico {
         Player p1 = new Player();
         p1.name = "Olle";
         p1.amount = startAmount;
+        p1.rollValue = 0;
         Player p2 = new Player();
         p2.name = "Fia";
         p2.amount = startAmount;
+        p2.rollValue = 0;
         Player p3 = new Player();
         p3.name = "Lisa";
         p3.amount = startAmount;
+        p3.rollValue = 0;
         players[0] = p1;
         players[1] = p2;
         players[2] = p3;
@@ -139,6 +154,7 @@ public class Mexico {
         int fstDice;  // Result of first dice
         int secDice;  // Result of second dice
         int nRolls;   // Current number of rolls
+        int rollValue;   // Combined value of the rolls from current round
     }
 
     /**************************************************
