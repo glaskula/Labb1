@@ -32,7 +32,7 @@ public class Mexico {
         players = getPlayers();
         current = getRandomPlayer(players);
         leader = current;
-        int maxRollsLeader = 3;
+        int maxRollsLeader = maxRolls;
 
         out.println("Mexico Game Started");
         statusMsg(players);
@@ -45,7 +45,8 @@ public class Mexico {
             if ("r".equals(cmd)) {
 
                     // --- Process ------
-                if(current.nRolls < maxRollsLeader && current.nRolls < maxRolls ){
+                boolean mayRoll = current.nRolls < maxRollsLeader && current.nRolls < maxRolls;
+                if(mayRoll){
                     rollDice(current);
                 }
                 else{
@@ -55,8 +56,9 @@ public class Mexico {
                     current = next(players, current);
                 }
                     // ---- Out --------
+                if(mayRoll) {
                     roundMsg(current);
-
+                }
             } else if ("n".equals(cmd)) {
                  // Process
                 if(leader == current){
@@ -67,14 +69,21 @@ public class Mexico {
                 out.println("?");
             }
 
-            if (nNext == 3) {
-                nNext = 0;
+            if (allRolled(nNext)) {
                 // --- Process -----
-
+                nNext = 0;
+                maxRollsLeader = maxRolls;
+                clearRoundResults(players);
+                int loser = getLoser(players);
+                current = players[loser];
+                leader = current;
+                
+                if (players[loser].amount == 0){
+                    removeLoser(loser,players);
+                }
                 // ----- Out --------------------
-                out.println("Round done ... lost!");
+                out.println("Round done " + players[loser].name + " lost!");
                 out.println("Next to roll is " + current.name);
-
                 statusMsg(players);
             }
         }
@@ -84,10 +93,50 @@ public class Mexico {
 
     // ---- Game logic methods --------------
 
+    void removeLoser(int loser, Player[] players){
+        int oldLength = players.length - 1;
+        
+        Player[] playersTmp = new Player[oldLength];
+    }
+    
+    void clearRoundResults(Player[] players){
+        for (int i = 0; i < players.length; i++) {
+            players[i].nRolls = 0;
+            players[i].score = 0;   //onödig
+            players[i].fstDice = 0; //onödig
+            players[i].secDice = 0; //onödig
+        }
+    }
+
+    int getLoser(Player[] players){
+        int loserIndex = 0;
+        for (int i = 0; i < players.length; i++) {
+            if(players[i].score < players[loserIndex].score){
+                loserIndex = i;
+            }
+        }
+        players[loserIndex].amount = players[loserIndex].amount - 1;
+        return loserIndex;
+    }
+
+    void getScore(Player current){
+        if(current.fstDice > current.secDice){
+            current.score = current.fstDice * 10 + current.secDice;
+        }
+        else{
+            current.score = current.secDice * 10 + current.fstDice;
+        }
+    }
+
     void rollDice(Player current) {
         current.nRolls = current.nRolls + 1;
         current.fstDice = 1 + rand.nextInt(5);
         current.secDice = 1 + rand.nextInt(5);
+        getScore(current);
+    }
+
+    boolean allRolled(int nNext) {
+        return (nNext == 3);
     }
 
     Player next(Player[] players, Player current){
@@ -133,6 +182,8 @@ public class Mexico {
         players[1] = p2;
         players[2] = p3;
         return players;
+        // olle, fia, lisa
+        // olle, lisa 
     }
 
     void statusMsg(Player[] players) {
@@ -166,6 +217,7 @@ public class Mexico {
         int fstDice;  // Result of first dice
         int secDice;  // Result of second dice
         int nRolls;   // Current number of rolls
+        int score;
     }
 
     /**************************************************
