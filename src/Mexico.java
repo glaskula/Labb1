@@ -71,22 +71,23 @@ public class Mexico {
 
             if (allRolled(nNext, players)) {
                 // --- Process -----
-                nNext = 0;
                 maxRollsLeader = maxRolls;
-                int loser = getLoser(players);
-                current = players[loser];
-                leader = current;
+                int loserIndex = getLoser(players);
+                current = players[loserIndex];
                 Player[] playersTmp = players;
-                boolean noResources = players[loser].amount == 0;
+                boolean noResources = players[loserIndex].amount == 0;
                 if (noResources){
-                    players = removeLoser(loser,players);
+                    players = removeLoser(loserIndex,players);
                     current = next(players, current);
+                    pot++;
                 }
+                leader = current;
                 clearRoundResults(players);
+                nNext = 0;
                 // ----- Out --------------------
-                out.println("Round done " + playersTmp[loser].name + " lost!");
+                out.println("Round done " + playersTmp[loserIndex].name + " lost!");
                 if(noResources){
-                    out.println(playersTmp[loser].name + " has no resources will leave game");
+                    out.println(playersTmp[loserIndex].name + " has no resources will leave game");
                 }
                 out.println("Next to roll is " + current.name);
                 statusMsg(players);
@@ -254,7 +255,7 @@ public class Mexico {
         //out.println(next(ps, ps[0]) == ps[1]);
         //out.println(getLoser(ps) == ps[0]);
 
-        exit(0);
+        //exit(0);
     }
 
 
