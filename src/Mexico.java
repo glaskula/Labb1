@@ -138,9 +138,16 @@ public class Mexico {
         if(current.fstDice > current.secDice){
             current.score = current.fstDice * 10 + current.secDice;
         }
+        else if ((current.fstDice == 2) && (current.secDice == 1)){
+            current.score = mexico;
+        }
+        else if ((current.fstDice == 1) && (current.secDice == 2){
+            current.score = mexico;
+        }
         else{
             current.score = current.secDice * 10 + current.fstDice;
         }
+
     }
 
     void rollDice(Player current) {
