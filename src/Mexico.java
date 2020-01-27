@@ -69,20 +69,25 @@ public class Mexico {
                 out.println("?");
             }
 
-            if (allRolled(nNext)) {
+            if (allRolled(nNext, players)) {
                 // --- Process -----
                 nNext = 0;
                 maxRollsLeader = maxRolls;
-                clearRoundResults(players);
                 int loser = getLoser(players);
                 current = players[loser];
                 leader = current;
-                
-                if (players[loser].amount == 0){
-                    removeLoser(loser,players);
+                Player[] playersTmp = players;
+                boolean noResources = players[loser].amount == 0;
+                if (noResources){
+                    players = removeLoser(loser,players);
+                    current = next(players, current);
                 }
+                clearRoundResults(players);
                 // ----- Out --------------------
-                out.println("Round done " + players[loser].name + " lost!");
+                out.println("Round done " + playersTmp[loser].name + " lost!");
+                if(noResources){
+                    out.println(playersTmp[loser].name + " has no resources will leave game");
+                }
                 out.println("Next to roll is " + current.name);
                 statusMsg(players);
             }
@@ -93,12 +98,21 @@ public class Mexico {
 
     // ---- Game logic methods --------------
 
-    void removeLoser(int loser, Player[] players){
-        int oldLength = players.length - 1;
-        
-        Player[] playersTmp = new Player[oldLength];
+    Player[] removeLoser(int loser, Player[] players){
+        int newLength = players.length - 1;
+
+        Player[] playersTmp = new Player[newLength];
+        int k = 0;
+        for (int i = 0; i < players.length; i++) {
+            if(!(players[i].name.equals(players[loser].name))){
+                playersTmp[k] = players[i];
+                k++;
+            }
+        }
+        players = playersTmp;
+        return players;
     }
-    
+
     void clearRoundResults(Player[] players){
         for (int i = 0; i < players.length; i++) {
             players[i].nRolls = 0;
@@ -135,13 +149,13 @@ public class Mexico {
         getScore(current);
     }
 
-    boolean allRolled(int nNext) {
-        return (nNext == 3);
+    boolean allRolled(int nNext, Player[] players) {
+        return (nNext == players.length);
     }
 
     Player next(Player[] players, Player current){
         nNext++;
-        if(indexOf(players,current) == 2){
+        if(indexOf(players,current) == (players.length-1)){
             return players[0];
         }
         else{
@@ -166,24 +180,14 @@ public class Mexico {
     // ---------- IO methods -----------------------
 
     Player[] getPlayers() {
-        // Ugly for now. If using a constructor this may
-        // be cleaned up.
         Player[] players = new Player[3];
-        Player p1 = new Player();
-        p1.name = "Olle";
-        p1.amount = startAmount;
-        Player p2 = new Player();
-        p2.name = "Fia";
-        p2.amount = startAmount;
-        Player p3 = new Player();
-        p3.name = "Lisa";
-        p3.amount = startAmount;
+        Player p1 = new Player("Olle",startAmount);
+        Player p2 = new Player("Fia",startAmount);
+        Player p3 = new Player("Lisa",startAmount);
         players[0] = p1;
         players[1] = p2;
         players[2] = p3;
         return players;
-        // olle, fia, lisa
-        // olle, lisa 
     }
 
     void statusMsg(Player[] players) {
@@ -218,6 +222,12 @@ public class Mexico {
         int secDice;  // Result of second dice
         int nRolls;   // Current number of rolls
         int score;
+
+        public Player(String n, int a){
+            name = n;
+            amount = a;
+        }
+
     }
 
     /**************************************************
@@ -231,13 +241,13 @@ public class Mexico {
     void test() {
         // A few hard coded player to use for test
         // NOTE: Possible to debug tests from here, very efficient!
-        Player[] ps = {new Player(), new Player(), new Player()};
-        ps[0].fstDice = 2;
-        ps[0].secDice = 6;
-        ps[1].fstDice = 6;
-        ps[1].secDice = 5;
-        ps[2].fstDice = 1;
-        ps[2].secDice = 1;
+        //Player[] ps = {new Player(), new Player(), new Player()};
+        //ps[0].fstDice = 2;
+       // ps[0].secDice = 6;
+        //ps[1].fstDice = 6;
+        //ps[1].secDice = 5;
+        //ps[2].fstDice = 1;
+        //ps[2].secDice = 1;
 
         //out.println(getScore(ps[0]) == 62);
         //out.println(getScore(ps[1]) == 65);
