@@ -2,6 +2,7 @@ import java.util.*;
 
 import static java.lang.Double.NaN;
 import static java.lang.Math.pow;
+import static java.lang.System.out;
 
 
 /*
@@ -67,41 +68,57 @@ class Calculator {
     // ------- Infix 2 Postfix ------------------------
 
     List<String> infix2Postfix(List<String> infix) {
+        // TODO
         Deque<String> stack = new ArrayDeque<>();
         List<String> postfix = new ArrayList<>();
-
-        for(int i = 0; i < infix.size(); i++){
-            if(infix.get(i).matches("-?\\d+(\\.\\d+)?")){
+        for (int i = 0; i < infix.size(); i++) {
+            if(infix.get(i).matches("\\d+")) {
                 postfix.add(infix.get(i));
             }
-            else if(stack.isEmpty()){
+            else if (isOpeningParen(infix.get(i))) {
                 stack.push(infix.get(i));
             }
-            else if(getPrecedence(stack.peek()) > getPrecedence(infix.get(i))){
+            else if (isClosingParen(infix.get(i))) {
+                while (!stack.isEmpty() && !stack.peek().equals("(")) {
+                    postfix.add(stack.pop());
+
+                }
+                stack.pop();
+            }
+            else if (stack.isEmpty()) {
+                stack.push(infix.get(i));
+            }
+            else if (!stack.peek().equals("(") && (getPrecedence(stack.peek()) > getPrecedence(infix.get(i)))) {
                 postfix.add(stack.pop());
                 stack.push(infix.get(i));
-                stack.removeLast();
             }
-            else if(getPrecedence(stack.peek()) < getPrecedence(infix.get(i))){
+            else if (!stack.peek().equals("(") && (getPrecedence(stack.peek()) < getPrecedence(infix.get(i)))) {
                 stack.push(infix.get(i));
             }
-            else if(getAssociativity(infix.get(i)) == Assoc.LEFT ){
+            else if (!stack.peek().equals("(") && (getAssociativity(infix.get(i)) == Assoc.LEFT)) {
                 postfix.add(stack.pop());
                 stack.push(infix.get(i));
             }
-            else if(getAssociativity(infix.get(i)) == Assoc.RIGHT ){
+            else if (!stack.peek().equals("(") && (getAssociativity(infix.get(i)) == Assoc.RIGHT)) {
+                stack.push(infix.get(i));
+            }
+            else{
                 stack.push(infix.get(i));
             }
         }
-
-        while(!stack.isEmpty()) {
+        while (!stack.isEmpty()) {
             postfix.add(stack.pop());
         }
-
         return postfix;
     }
 
     // TODO More methods
+    boolean isOpeningParen(String ch){
+        return "(".indexOf(ch) >= 0;
+    }
+    boolean isClosingParen(String ch){
+        return ")".indexOf(ch) >= 0;
+    }
 
     int getPrecedence(String op) {
         if ("+-".contains(op)) {
@@ -136,39 +153,36 @@ class Calculator {
     List<String> tokenize(String expr) {
         List<String> list = new ArrayList<>();
         String str;
-        for(int i = 0; i < expr.length(); i++){
-            boolean A = Character.toString(expr.charAt(i)).contains(Character.toString(OPERATORS.charAt(0)));
-            boolean B = Character.toString(expr.charAt(i)).contains(Character.toString(OPERATORS.charAt(1)));
-            boolean C = Character.toString(expr.charAt(i)).contains(Character.toString(OPERATORS.charAt(2)));
-            boolean D = Character.toString(expr.charAt(i)).contains(Character.toString(OPERATORS.charAt(3)));
-            boolean E = Character.toString(expr.charAt(i)).contains(Character.toString(OPERATORS.charAt(4)));
-            boolean F = Character.toString(expr.charAt(i)).contains("(");
-            boolean G = Character.toString(expr.charAt(i)).contains(")");
-            if(Character.isDigit(expr.charAt(i))){
-                str = checkLength(expr,i);
-                i = i + str.length() - 1;
+        for (int i = 0; i < expr.length(); i++) {
+            boolean a = (Character.toString(expr.charAt(i)).contains(Character.toString(OPERATORS.charAt(0))));
+            boolean b = (Character.toString(expr.charAt(i)).contains(Character.toString(OPERATORS.charAt(1))));
+            boolean c = (Character.toString(expr.charAt(i)).contains(Character.toString(OPERATORS.charAt(2))));
+            boolean d = (Character.toString(expr.charAt(i)).contains(Character.toString(OPERATORS.charAt(3))));
+            boolean e = (Character.toString(expr.charAt(i)).contains(Character.toString(OPERATORS.charAt(4))));
+            boolean f = (Character.toString(expr.charAt(i)).contains("("));
+            boolean g = (Character.toString(expr.charAt(i)).contains(")"));
+
+            if (Character.isDigit(expr.charAt(i))) {
+                str = getNumber(expr, i);
+                i = i + str.length()-1;
                 list.add(str);
             }
-            else if(A || B || C || D || E || F || G){
+            else if (a || b || c || d || e || f || g) {
                 str = Character.toString(expr.charAt(i));
                 list.add(str);
             }
         }
-
         return list;
     }
 
-    String checkLength(String expr, int startIndex){
+    String getNumber(String r, int startIndex) {
         StringBuilder sb = new StringBuilder();
-        for(int i = startIndex; i < expr.length(); i++){
-            if(Character.isDigit(expr.charAt(i))){
-                sb.append(expr.charAt(i));
+        for (int i = startIndex; i < r.length(); i++) {
+            if (Character.isDigit(r.charAt(i))) {
+                sb.append(r.charAt(i));
             }
             else break;
         }
         return sb.toString();
     }
-
-
-
 }
