@@ -42,8 +42,10 @@ class Calculator {
     // ------  Evaluate RPN expression -------------------
 
     double evalPostfix(List<String> postfix) {
+        if(!missingOperand(postfix)){
+            throw new IllegalArgumentException(MISSING_OPERAND);
+        }
         Deque<String> stack = new ArrayDeque<>();
-        out.println(postfix);
         for(int i = 0; i < postfix.size(); i++){
             if(postfix.get(i).matches("\\d+")){
                 stack.push(postfix.get(i));
@@ -54,10 +56,28 @@ class Calculator {
                 double d2 = Double.parseDouble(stack.pop());
                 double result = applyOperator(op,d1,d2);
                 stack.push(Double.toString(result));
-                out.println(result);
             }
         }
         return Double.parseDouble(stack.peek());
+    }
+
+    boolean missingOperand(List<String> postfix){
+        int amountOfNumbers = 0;
+        int amountOfOperators = 0;
+        for(int i = 0; i < postfix.size(); i++){
+            if(postfix.get(i).matches("\\d+")){
+                amountOfNumbers++;
+            }
+            else{
+                amountOfOperators++;
+            }
+        }
+        if(amountOfOperators != (amountOfNumbers-1)){
+            return true;
+        }
+        else{
+            return false;   
+        }
     }
 
     double applyOperator(String op, double d1, double d2) {
@@ -102,7 +122,9 @@ class Calculator {
                 stack.push(infix.get(i));
             }
             else if (!stack.peek().equals("(") && (getPrecedence(stack.peek()) > getPrecedence(infix.get(i)))) {
-                postfix.add(stack.pop());
+                while(!stack.isEmpty() && (getPrecedence(stack.peek()) > getPrecedence(infix.get(i)))){
+                    postfix.add(stack.pop());
+                }
                 stack.push(infix.get(i));
             }
             else if (!stack.peek().equals("(") && (getPrecedence(stack.peek()) < getPrecedence(infix.get(i)))) {
