@@ -42,9 +42,7 @@ class Calculator {
     // ------  Evaluate RPN expression -------------------
 
     double evalPostfix(List<String> postfix) {
-        if(!missingOperand(postfix)){
-            throw new IllegalArgumentException(MISSING_OPERAND);
-        }
+        missingOperand(postfix);
         Deque<String> stack = new ArrayDeque<>();
         for(int i = 0; i < postfix.size(); i++){
             if(postfix.get(i).matches("\\d+")){
@@ -61,7 +59,7 @@ class Calculator {
         return Double.parseDouble(stack.peek());
     }
 
-    boolean missingOperand(List<String> postfix){
+    void missingOperand(List<String> postfix){
         int amountOfNumbers = 0;
         int amountOfOperators = 0;
         for(int i = 0; i < postfix.size(); i++){
@@ -73,10 +71,7 @@ class Calculator {
             }
         }
         if(amountOfOperators != (amountOfNumbers-1)){
-            return true;
-        }
-        else{
-            return false;   
+            throw new IllegalArgumentException(MISSING_OPERAND);
         }
     }
 
