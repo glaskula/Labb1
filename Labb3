@@ -1,3 +1,4 @@
+import java.io.CharArrayReader;
 import java.util.*;
 
 import static java.lang.Double.NaN;
@@ -34,6 +35,7 @@ class Calculator {
         if (expr.length() == 0) {
             return NaN;
         }
+        checkParentheses(expr);
         List<String> tokens = tokenize(expr);
         List<String> postfix = infix2Postfix(tokens);
         return evalPostfix(postfix);
@@ -70,8 +72,43 @@ class Calculator {
                 amountOfOperators++;
             }
         }
-        if(amountOfOperators != (amountOfNumbers-1)){
+        if(amountOfOperators < (amountOfNumbers-1)){
+            throw new IllegalArgumentException(MISSING_OPERATOR);
+        }
+        else if(amountOfOperators > (amountOfNumbers-1)){
             throw new IllegalArgumentException(MISSING_OPERAND);
+        }
+    }
+
+    void checkParentheses(String expr) {
+        final Deque<Character> stack = new ArrayDeque<>();
+        for (char ch : expr.toCharArray()) {
+            if (isOpeningParen(Character.toString(ch))) {
+                stack.push(ch);
+            } else if ( isClosingParen(Character.toString(ch))) {
+                char top = stack.peek();
+                if (matching(ch) == top) {
+                    stack.pop();
+                }
+            }
+        }
+        if(!stack.isEmpty()){
+            throw new IllegalArgumentException(MISSING_OPERATOR);
+        }
+    }
+
+    char matching(char ch) {
+        //char c =  must initialize but to what?!
+        switch (ch) {
+            case ')':
+                return '(';  // c = '('
+            case ']':
+                return '[';
+            case '}':
+                return '{';
+            default:
+                // return c;
+                throw new IllegalArgumentException("No match found");
         }
     }
 
@@ -96,8 +133,16 @@ class Calculator {
 
     // ------- Infix 2 Postfix ------------------------
 
+    String listToString(List<String> infix){
+        StringBuilder sh = new StringBuilder();
+        for(int i = 0; i < infix.size(); i++){
+            sh.append(infix.get(i));
+        }
+        return sh.toString();
+    }
+
     List<String> infix2Postfix(List<String> infix) {
-        // TODO
+        checkParentheses(listToString(infix));
         Deque<String> stack = new ArrayDeque<>();
         List<String> postfix = new ArrayList<>();
         for (int i = 0; i < infix.size(); i++) {
