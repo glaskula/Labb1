@@ -1,0 +1,30 @@
+package spaceinv.model;
+
+import java.util.List;
+
+public abstract class AbstractSpaceship extends abstractMove implements Shootable{
+
+    public AbstractSpaceship(double x, double y, double width, double height, double dx, double dy) {
+        super(x, y, width, height, dx, dy);
+    }
+
+    public void moveShips(List<AbstractSpaceship> ships, List<Projectile> shipBombs) {
+        setX(getDx() + getX());
+        for(int i = 0; i < ships.size(); i++)
+            if(shipBombs.get(i).getDy() == 0){
+                shipBombs.get(i).setX(ships.get(i).getX());
+                shipBombs.get(i).setY(ships.get(i).getY());
+            }
+    }
+    public static void turn(List<AbstractSpaceship> ships){
+        for(int i = 0; i < ships.size(); i++ ){
+            ships.get(i).setDx(ships.get(i).getDx() * -1);
+            ships.get(i).setY(ships.get(i).getY() + 5);
+        }
+    }
+
+    @Override
+    public Projectile fire() {
+        return Shooter.fire(this, -1);
+    }
+}
