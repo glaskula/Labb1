@@ -1,6 +1,9 @@
 package spaceinv.model;
 
 
+import spaceinv.event.EventBus;
+import spaceinv.event.ModelEvent;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -40,7 +43,7 @@ public class SI {
     // TODO More references here
     private final Gun gun;
 
-    //private final List<Projectile> shipBombs = new ArrayList<>();
+    private List<Positionable> ps = new ArrayList<>();
     private List<Projectile> shipBombs;
     private Projectile gunProjectile;
     private List<AbstractSpaceship> ships;
@@ -63,13 +66,10 @@ public class SI {
     }
 
     // ------ Game loop (called by timer) -----------------
-
     public void update(long now) {
-
-        /*if( ships.size() == 0){
+        if( ships.size() == 0){
             EventBus.INSTANCE.publish(new ModelEvent(ModelEvent.Type.HAS_WON));
-        }*/
-
+        }
 
         //     Movement
         moveGun(gun.getDx());
@@ -79,7 +79,7 @@ public class SI {
         }
 
         if (OuterSpace.hasleft(gunProjectile)) {
-            gunProjectile.setDy(0);
+            ps.remove(gunProjectile);
         }
 
         for (int i = 0; i < ships.size(); i++){
@@ -92,19 +92,17 @@ public class SI {
         }
 
         //    Ships fire
-        for(int i = 0; i < ships.size(); i++ ){
-            ships.get(i).fire();
-            shipBombs.get(i).setDy(-1);
-        }
-        for(int i = 0; i < ships.size(); i++){
-            if (Ground.hitGround(shipBombs.get(i))) {
-                shipBombs.get(i).setDy(0);
-            }
-        }
+            for (int i = 0; i < ships.size(); i++) {
+                ships.get(i).fire();
+               // shipBombs.get(i).setDy(-1);
 
-        /*
-             Collisions
-         */
+                if (Ground.hitGround(shipBombs.get(i))) {
+                    shipBombs.get(i).setDy(0);
+                }
+        }
+        //    Collisions
+
+
 
     }
 
@@ -126,23 +124,23 @@ public class SI {
     // ---------- Interaction with GUI  -------------------------
 
     public void fireGun() {
-        gun.fire();
-        gunProjectile.setDy(5);
+        if(gunProjectile.getY() < OUTER_SPACE_HEIGHT) {
+            gunProjectile = gun.fire();
+            ps.add(gunProjectile);
+        }
+        else if(gunProjectile.getDy() == 0){
+            gunProjectile = gun.fire();
+            ps.add(gunProjectile);
+        }
     }
 
     public void moveGun(double dx){
         gun.setX(dx + gun.getX());
-        if(gunProjectile.getDy() == 0){
-            gunProjectile.setX(gun.getX() + GUN_WIDTH/2 - PROJECTILE_WIDTH/2);
-            gunProjectile.setY(gun.getY() + GUN_HEIGHT/2 - PROJECTILE_HEIGHT/2);
-        }
     }
 
 
     public List<Positionable> getPositionable() {
-        List<Positionable> ps = new ArrayList<>();
         ps.add(gun);
-        ps.add(gunProjectile);
         ps.addAll(ships);
         ps.addAll(shipBombs);
         return ps;
