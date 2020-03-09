@@ -43,10 +43,10 @@ public class SI {
     // TODO More references here
     private final Gun gun;
 
-    private List<Positionable> ps = new ArrayList<>();
     private List<Projectile> shipBombs;
     private Projectile gunProjectile;
     private List<AbstractSpaceship> ships;
+    private List<AbstractSpaceship> toRemove = new ArrayList<>();
 
     private int points;
 
@@ -55,7 +55,7 @@ public class SI {
 
     // Timing. All timing handled here!
     private long lastTimeForMove;
-    private long lastTimeForFire;
+    private long lastTimeForFire = 0;
     private int shipToMove = 0;
 
     public SI(Gun gun, Projectile gunProjectile, List ships, List shipBombs) {
@@ -67,19 +67,22 @@ public class SI {
 
     // ------ Game loop (called by timer) -----------------
     public void update(long now) {
+
         if( ships.size() == 0){
             EventBus.INSTANCE.publish(new ModelEvent(ModelEvent.Type.HAS_WON));
         }
 
         //     Movement
         moveGun(gun.getDx());
-        gunProjectile.move();
+        if(gunProjectile != null) {
+            gunProjectile.move();
+        }
         for (int i = 0; i < shipBombs.size(); i++){
             shipBombs.get(i).move();
         }
 
-        if (OuterSpace.hasleft(gunProjectile)) {
-            ps.remove(gunProjectile);
+        if (gunProjectile != null && OuterSpace.hasleft(gunProjectile)) {
+            gunProjectile = null;
         }
 
         for (int i = 0; i < ships.size(); i++){
@@ -88,22 +91,37 @@ public class SI {
             }
         }
         for(int i = 0; i < ships.size(); i++ ){
-            ships.get(i).moveShips(ships, shipBombs);
+            ships.get(i).moveShips();
         }
 
         //    Ships fire
-            for (int i = 0; i < ships.size(); i++) {
-                ships.get(i).fire();
-               // shipBombs.get(i).setDy(-1);
-
-                if (Ground.hitGround(shipBombs.get(i))) {
-                    shipBombs.get(i).setDy(0);
-                }
+        for (int i = 0; i < ships.size(); i++) {
+            int shipShooter = rand.nextInt(ships.size());
+            if((now - lastTimeForFire) > ONE_SEC){
+                shipBombs.add(ships.get(shipShooter).fire());
+                lastTimeForFire = now;
+            }
+        }
+        for(int i = 0; i < shipBombs.size(); i++){
+            if (Ground.hitGround(shipBombs.get(i))) {
+                shipBombs.remove(shipBombs.get(i));
+            }
         }
         //    Collisions
+        for (int i = 0; i < ships.size(); i++) {
+            if(gunProjectile != null && projectileHitShip(i)){
+                toRemove.add(ships.get(i));
+                gunProjectile = null;
+            }
+        }
+        ships.removeAll(toRemove);
+        toRemove.clear();
+    }
 
-
-
+    private boolean projectileHitShip(int i){
+        boolean xHit = (gunProjectile.getX() < (ships.get(i).getX() + SHIP_WIDTH) && ships.get(i).getX() < gunProjectile.getX());
+        boolean yHit = (gunProjectile.getY() < (ships.get(i).getY() + SHIP_HEIGHT) && ships.get(i).getY() < gunProjectile.getY());
+        return xHit && yHit;
     }
 
     private boolean shipHitRightLimit(int i) {
@@ -124,13 +142,15 @@ public class SI {
     // ---------- Interaction with GUI  -------------------------
 
     public void fireGun() {
-        if(gunProjectile.getY() < OUTER_SPACE_HEIGHT) {
+        if(gunProjectile != null && gunProjectile.getY() < OUTER_SPACE_HEIGHT) {
             gunProjectile = gun.fire();
-            ps.add(gunProjectile);
         }
-        else if(gunProjectile.getDy() == 0){
+        else if(gunProjectile == null) {
             gunProjectile = gun.fire();
-            ps.add(gunProjectile);
+
+        }
+        else if(gunProjectile.getDy() == 0) {
+            gunProjectile = gun.fire();
         }
     }
 
@@ -140,9 +160,15 @@ public class SI {
 
 
     public List<Positionable> getPositionable() {
+        List<Positionable> ps = new ArrayList<>();
         ps.add(gun);
         ps.addAll(ships);
-        ps.addAll(shipBombs);
+        if(shipBombs != null) {
+            ps.addAll(shipBombs);
+        }
+        if(gunProjectile != null) {
+            ps.add(gunProjectile);
+        }
         return ps;
     }
 
