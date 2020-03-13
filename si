@@ -3,6 +3,7 @@ package spaceinv.model;
 
 import spaceinv.event.EventBus;
 import spaceinv.event.ModelEvent;
+import spaceinv.model.ships.Bomber;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,10 +26,10 @@ public class SI {
     public static final int SHIP_WIDTH = 20;
     public static final int SHIP_HEIGHT = 20;
     public static final int SHIP_MAX_DX = 3;
-    public static final int SHIP_MAX_DY = 0;
+    public static final int SHIP_MAX_DY = 5;
     public static final int GUN_WIDTH = 20;
     public static final int GUN_HEIGHT = 20;
-    public static final double GUN_MAX_DX = 10;
+    public static final double GUN_MAX_DX = 30;
     public static final double PROJECTILE_WIDTH = 5;
     public static final double PROJECTILE_HEIGHT = 5;
     public static final int GROUND_HEIGHT = 20;
@@ -57,23 +58,29 @@ public class SI {
     private long lastTimeForMove;
     private long lastTimeForFire = 0;
     private int shipToMove = 0;
+    private double speed = 0;
+    private int life = 3;
 
-    public SI(Gun gun, Projectile gunProjectile, List ships, List shipBombs) {
+    public SI(Gun gun, List ships) {
         this.gun = gun;
-        this.gunProjectile = gunProjectile;
+        this.gunProjectile = null;
         this.ships = ships;
-        this.shipBombs = shipBombs;
+        this.shipBombs = new ArrayList<>();
     }
 
     // ------ Game loop (called by timer) -----------------
     public void update(long now) {
+        for (int i = 0; i < ships.size(); i++) {
+            if(Ground.shipsHitGround(ships, i)){
+                EventBus.INSTANCE.publish(new ModelEvent(ModelEvent.Type.HAS_WON));
+            }
+        }
 
         if( ships.size() == 0){
             EventBus.INSTANCE.publish(new ModelEvent(ModelEvent.Type.HAS_WON));
         }
 
         //     Movement
-        moveGun(gun.getDx());
         if(gunProjectile != null) {
             gunProjectile.move();
         }
@@ -85,13 +92,23 @@ public class SI {
             gunProjectile = null;
         }
 
-        for (int i = 0; i < ships.size(); i++){
-            if (shipHitRightLimit(i) || shipHitLeftLimit(i)) {
-                AbstractSpaceship.turn(ships);
-            }
-        }
-        for(int i = 0; i < ships.size(); i++ ){
+        /*ships.get(shipToMove).moveShips();
+        shipToMove++;
+        if(shipToMove == ships.size()){
+            shipToMove = 0;
+        }*/
+        
+        for(int i = 0; i < ships.size(); i++){
             ships.get(i).moveShips();
+        }
+
+        for(int i = 0; i < ships.size(); i++){
+            if (shipHitRightLimit(i)) {
+                AbstractSpaceship.turn(ships,-5,SHIP_MAX_DY);
+            }
+            else if(shipHitLeftLimit(i)){
+                AbstractSpaceship.turn(ships,5,SHIP_MAX_DY);
+            }
         }
 
         //    Ships fire
@@ -112,15 +129,30 @@ public class SI {
             if(gunProjectile != null && projectileHitShip(i)){
                 toRemove.add(ships.get(i));
                 gunProjectile = null;
+                points = points + ships.get(i).getPoints();
             }
         }
         ships.removeAll(toRemove);
         toRemove.clear();
+        for (int i = 0; i < shipBombs.size(); i++) {
+            if(projectileHitGun(i)){
+                life--;
+                if(life == 0) {
+                    EventBus.INSTANCE.publish(new ModelEvent(ModelEvent.Type.HAS_WON));
+                }
+            }
+        }
     }
 
     private boolean projectileHitShip(int i){
         boolean xHit = (gunProjectile.getX() < (ships.get(i).getX() + SHIP_WIDTH) && ships.get(i).getX() < gunProjectile.getX());
         boolean yHit = (gunProjectile.getY() < (ships.get(i).getY() + SHIP_HEIGHT) && ships.get(i).getY() < gunProjectile.getY());
+        return xHit && yHit;
+    }
+
+    private boolean projectileHitGun(int i){
+        boolean xHit = (shipBombs.get(i).getX() < (gun.getX() + SHIP_WIDTH) && gun.getX() < shipBombs.get(i).getX());
+        boolean yHit = (shipBombs.get(i).getY() > gun.getY() && shipBombs.get(i).getY() < (gun.getY() + GUN_HEIGHT));
         return xHit && yHit;
     }
 
@@ -156,6 +188,12 @@ public class SI {
 
     public void moveGun(double dx){
         gun.setX(dx + gun.getX());
+        if(gun.getX() <= 0){
+            gun.setX(1);
+        }
+        if(gun.getX() >= GAME_WIDTH-GUN_WIDTH){
+            gun.setX(GAME_WIDTH-GUN_WIDTH-1);
+        }
     }
 
 
@@ -163,9 +201,7 @@ public class SI {
         List<Positionable> ps = new ArrayList<>();
         ps.add(gun);
         ps.addAll(ships);
-        if(shipBombs != null) {
-            ps.addAll(shipBombs);
-        }
+        ps.addAll(shipBombs);
         if(gunProjectile != null) {
             ps.add(gunProjectile);
         }
